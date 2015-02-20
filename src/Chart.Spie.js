@@ -7,6 +7,8 @@
 		helpers = Chart.helpers;
 
 	var defaultConfig = {
+		showScale: false,
+
 		//Boolean - Show a backdrop to the scale label
 		scaleShowLabelBackdrop : true,
 
@@ -23,7 +25,7 @@
 		scaleBackdropPaddingX : 2,
 
 		//Boolean - Show line for each value in the scale
-		scaleShowLine : true,
+		scaleShowLine : false,
 
 		//Boolean - Stroke a line around each segment in the chart
 		segmentShowStroke : true,
