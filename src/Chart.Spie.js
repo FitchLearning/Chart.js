@@ -214,7 +214,8 @@
 					height: slice.height,
 					fillColor: slice.color,
 					highlightColor: slice.highlight,
-					label: segment.label + slice.label,
+					label: (segment.label? segment.label: "") + 
+						(slice.label? slice.label: ""),
 					startAngle: Math.PI * 1.5
 				}));
 			}, this);
