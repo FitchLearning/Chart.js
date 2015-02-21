@@ -3509,7 +3509,7 @@
 		animateScale : false,
 
 		//String - A legend template
-		legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<segments.length; i++){%><li><span style=\"background-color:<%=segments[i].fillColor%>\"></span><%if(segments[i].label){%><%=segments[i].label%><%}%></li><ul><% for (var j=0; j<segments[i].slices.length; j++){%><li><span style=\"background-color:<%=segments[i].slices[j].fillColor%>\"></span><%if(segments[i].slices[j].label){%><%=segments[i].slices[j].label%><%}%></li><%}%></ul><%}%></ul>",
+		legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<segments.length; i++){%><li><span style=\"background-color:<%=segments[i].fillColor%>\"></span><%if(segments[i].label){%><%=segments[i].label%><%}%></li><ul><% for (var j=0; j<segments[i].slices.length; j++){%><li><span style=\"background-color:<%=segments[i].slices[j].fillColor%>\"></span><%if(segments[i].slices[j].label){%><%=segments[i].slices[j].segmentLabel%><%}%></li><%}%></ul><%}%></ul>",
 
 		tooltipTemplate: "<%if (label){%><%=label%><%}%><%if (segmentLabel && label){%>-<%}%><%if (segmentLabel){%><%=segmentLabel%><%}%>"
 
@@ -3686,6 +3686,7 @@
 				innerHeight: segment.innerHeight,
 				width: segment.width,
 				slices: slices,
+				label: segment.label,
 				outerRadius: (this.options.animateScale) ? 0 : this.scale.calculateCenterOffset(this.getSegmentHeight(segment.slices)),
 				circumference: (this.options.animateRotate) ? 0 : this.calculateSegmentCircumference(segment.width),
 				startAngle: Math.PI * 1.5
