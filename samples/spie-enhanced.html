@@ -4,6 +4,26 @@
 		<title>Spie Chart</title>
 		<script src="../Chart.js"></script>
 		<style>
+			body {
+  				position: relative;
+  				font-family: "proxima-nova", 'Helvetica Neue', 'Helvetica', 'sans-serif';
+  				color: #232830;
+			}
+
+			#sides{
+			margin:0;
+			}
+			#left{
+			float:left;
+			width:50%;
+			overflow:hidden;
+			}
+			#right{
+			float:left;
+			width:50%;
+			overflow:hidden;
+			} 
+
 			#canvas-holder{
 	        	width:240px;
 	      	}
@@ -38,11 +58,19 @@
 		</style>
 	</head>
 	<body>
-		<div id="canvas-holder" style="width:30%">
-			<canvas id="chart-area" width="300" height="300"/>
+		<h1> Spie Chart with Legend </h1>
+		<section id="sides">
+		
+		<div id="left">
+			<div id="canvas-holder" style="width:100%">
+				<canvas id="chart-area" width="300" height="180"/>
+			</div>
 		</div>
 
-		<div id="my-spie-legend">
+		<div id="right">
+			<div id="my-spie-legend"/>
+		</div>
+		</section>
 
 
 	<script>
