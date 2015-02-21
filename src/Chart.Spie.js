@@ -172,8 +172,11 @@
 			if (this.options.showTooltips){
 				helpers.bindEvents(this, this.options.tooltipEvents, function(evt){
 					var activeSlices = (evt.type !== 'mouseout') ? this.getSlicesAtEvent(evt) : [];
-					helpers.each(this.segments,function(slice){
-						slice.restore(["fillColor"]);
+					helpers.each(this.segments,function(segment){
+						segment.restore(["fillColor"]);
+						helpers.each(segment.slices,function(slice){
+							slice.restore(["fillColor"]);
+						});
 					});
 					helpers.each(activeSlices,function(activeSlice){
 						activeSlice.fillColor = activeSlice.highlightColor;
