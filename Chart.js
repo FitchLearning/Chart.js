@@ -3669,15 +3669,19 @@
 						}
 					});
 					helpers.each(activeSegments,function(activeSegment){
+						// Determine whether to highlight inner or outer radius.
 						if (activeSegment.withinOuterRadius){
+							// It's in the outer part of the segment:
 							activeSegment.fillColor = activeSegment.highlightColor;
 							if (activeSegment.innerFillColor){
 								activeSegment.restore(["innerFillColor"]);
 							}
 						} else if (activeSegment.withinInnerRadius){
+							// It's in the inner part of the segment:
 							activeSegment.innerFillColor = activeSegment.highlightColor;
 							activeSegment.restore(["fillColor"]);
 
+							// Temporarily set label as inner label for showTooltip call
 							if (activeSegment.innerLabel){
 								activeSegment.label = activeSegment.innerLabel;
 							}
@@ -3685,6 +3689,7 @@
 					});
 					this.showTooltip(activeSegments);
 
+					// Reset labels back to non-inner label after showTooltip call.
 					helpers.each(activeSegments,function(activeSegment){
 						if (activeSegment.innerLabel){
 							activeSegment.restore(["label"]);
