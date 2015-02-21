@@ -71,9 +71,62 @@
 				strokeWidth : this.options.segmentStrokeWidth,
 				strokeColor : this.options.segmentStrokeColor,
 				ctx : this.chart.ctx,
-				innerRadius : 0,
+				centerRadius : 0,
 				x : this.chart.width/2,
-				y : this.chart.height/2
+				y : this.chart.height/2,
+				
+				// Extend to allow for two separate parts to the segment, inner & outer.
+				draw : function(animationPercent){
+
+					var easingDecimal = animationPercent || 1;
+
+					var ctx = this.ctx;
+
+					ctx.beginPath();
+
+					ctx.arc(this.x, this.y, this.outerRadius, this.startAngle, this.endAngle);
+
+					// Determine whether to color from the center of the spie, or only outside
+					// the space occupied by the inner height.
+					var center = this.innerRadius? this.innerRadius: this.centerRadius;
+					
+					ctx.arc(this.x, this.y, center, this.endAngle, this.startAngle, true);
+
+					ctx.closePath();
+					ctx.strokeStyle = this.strokeColor;
+					ctx.lineWidth = this.strokeWidth;
+
+					ctx.fillStyle = this.fillColor;
+
+					ctx.fill();
+					ctx.lineJoin = 'bevel';
+
+					if (this.showStroke){
+						ctx.stroke();
+					}
+
+					// If there is an inner heigh, draw this part of the segment...
+					if (this.innerHeight){
+						ctx.beginPath();
+
+						ctx.arc(this.x, this.y, this.innerRadius, this.startAngle, this.endAngle);
+
+						ctx.arc(this.x, this.y, this.centerRadius, this.endAngle, this.startAngle, true);
+
+						ctx.closePath();
+						ctx.strokeStyle = this.strokeColor;
+						ctx.lineWidth = this.strokeWidth;
+
+						ctx.fillStyle = this.innerFillColor;
+
+						ctx.fill();
+						ctx.lineJoin = 'bevel';
+
+						if (this.showStroke){
+							ctx.stroke();
+						}
+					}
+				}
 			});
 			this.scale = new Chart.RadialScale({
 				display: this.options.showScale,
@@ -139,14 +192,18 @@
 
 			this.segments.splice(index, 0, new this.SegmentArc({
 				fillColor: segment.color,
+				innerFillColor: segment.innerColor,
 				highlightColor: segment.highlight || segment.color,
 				label: segment.label,
 				height: segment.height,
+				innerHeight: segment.innerHeight,
 				width: segment.width,
 				outerRadius: (this.options.animateScale) ? 0 : this.scale.calculateCenterOffset(segment.height),
+				innerRadius: (this.options.animateScale) ? 0 : this.scale.calculateCenterOffset(segment.innerHeight),
 				circumference: (this.options.animateRotate) ? 0 : this.calculateSegmentCircumference(segment.width),
 				startAngle: Math.PI * 1.5
 			}));
+
 			if (!silent){
 				this.reflow();
 				this.update();
@@ -232,7 +289,8 @@
 
 			helpers.each(this.segments, function(segment){
 				segment.update({
-					outerRadius : this.scale.calculateCenterOffset(segment.height)
+					outerRadius : this.scale.calculateCenterOffset(segment.height),
+					innerRadius : this.scale.calculateCenterOffset(segment.innerHeight)
 				});
 			}, this);
 
@@ -247,7 +305,8 @@
 			helpers.each(this.segments,function(segment, index){
 				segment.transition({
 					circumference : this.calculateSegmentCircumference(segment.width),
-					outerRadius : this.scale.calculateCenterOffset(segment.height)
+					outerRadius : this.scale.calculateCenterOffset(segment.height),
+					innerRadius : this.scale.calculateCenterOffset(segment.innerHeight)
 				},easingDecimal);
 
 				segment.endAngle = segment.startAngle + segment.circumference;
@@ -263,6 +322,7 @@
 					this.segments[index+1].startAngle = segment.endAngle;
 				}
 				segment.draw();
+
 			}, this);
 			this.scale.draw();
 		}
