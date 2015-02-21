@@ -3677,9 +3677,19 @@
 						} else if (activeSegment.withinInnerRadius){
 							activeSegment.innerFillColor = activeSegment.highlightColor;
 							activeSegment.restore(["fillColor"]);
+
+							if (activeSegment.innerLabel){
+								activeSegment.label = activeSegment.innerLabel;
+							}
 						}
 					});
 					this.showTooltip(activeSegments);
+
+					helpers.each(activeSegments,function(activeSegment){
+						if (activeSegment.innerLabel){
+							activeSegment.restore(["label"]);
+						}
+					});
 				});
 			}
 
@@ -3706,6 +3716,7 @@
 				innerFillColor: segment.innerColor,
 				highlightColor: segment.highlight || segment.color,
 				label: segment.label,
+				innerLabel: segment.innerLabel,
 				height: segment.height,
 				innerHeight: segment.innerHeight,
 				width: segment.width,
