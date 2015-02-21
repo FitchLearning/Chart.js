@@ -25,7 +25,7 @@
 		scaleBackdropPaddingX : 2,
 
 		//Boolean - Show line for each value in the scale
-		scaleShowLine : false,
+		scaleShowLine : true,
 
 		//Boolean - Stroke a line around each segment in the chart
 		segmentShowStroke : true,
@@ -66,6 +66,38 @@
 		initialize:  function(data){
 			this.segments = [];
 			//Declare segment class as a chart instance specific class, so it can share props for this instance
+			
+			this.SliceArc = Chart.Arc.extend({
+				x : this.chart.width/2,
+				y : this.chart.height/2,
+
+				// Override to highlight correct part of segment
+				inRange : function(chartX,chartY){
+
+					var pointRelativePosition = helpers.getAngleFromPoint(this, {
+						x: chartX,
+						y: chartY
+					});
+
+					//Check if within the range of the open/close angle
+					var betweenAngles = (pointRelativePosition.angle >= this.startAngle && pointRelativePosition.angle <= this.endAngle);
+					
+					var withinSlice = (pointRelativePosition.distance >= this.innerRadius && pointRelativePosition.distance <= this.outerRadius);
+
+					console.log("within " + this.label + "?: " + betweenAngles + ", " + withinSlice);
+					return (betweenAngles && withinSlice);
+					//Ensure within the outside of the arc centre, but inside arc outer
+				},
+				tooltipPosition : function(){
+					var centreAngle = this.startAngle + ((this.endAngle - this.startAngle) / 2),
+						rangeFromCentre = (this.outerRadius - this.innerRadius) / 2 + this.innerRadius;
+					return {
+						x : this.x + (Math.cos(centreAngle) * rangeFromCentre),
+						y : this.y + (Math.sin(centreAngle) * rangeFromCentre)
+					};
+				}
+			});
+
 			this.SegmentArc = Chart.Arc.extend({
 				showStroke : this.options.segmentShowStroke,
 				strokeWidth : this.options.segmentStrokeWidth,
@@ -82,42 +114,19 @@
 
 					var ctx = this.ctx;
 
-					ctx.beginPath();
-
-					ctx.arc(this.x, this.y, this.outerRadius, this.startAngle, this.endAngle);
-
-					// Determine whether to color from the center of the spie, or only outside
-					// the space occupied by the inner height.
-					var center = this.innerRadius? this.innerRadius: this.centerRadius;
+					helpers.each(this.slices, function(slice){
 					
-					ctx.arc(this.x, this.y, center, this.endAngle, this.startAngle, true);
-
-					ctx.closePath();
-					ctx.strokeStyle = this.strokeColor;
-					ctx.lineWidth = this.strokeWidth;
-
-					ctx.fillStyle = this.fillColor;
-
-					ctx.fill();
-					ctx.lineJoin = 'bevel';
-
-					if (this.showStroke){
-						ctx.stroke();
-					}
-
-					// If there is an inner heigh, draw this part of the segment...
-					if (this.innerHeight){
 						ctx.beginPath();
 
-						ctx.arc(this.x, this.y, this.innerRadius, this.startAngle, this.endAngle);
+						ctx.arc(this.x, this.y, slice.outerRadius, this.startAngle, this.endAngle);
 
-						ctx.arc(this.x, this.y, this.centerRadius, this.endAngle, this.startAngle, true);
+						ctx.arc(this.x, this.y, slice.innerRadius, this.endAngle, this.startAngle, true);
 
 						ctx.closePath();
 						ctx.strokeStyle = this.strokeColor;
 						ctx.lineWidth = this.strokeWidth;
 
-						ctx.fillStyle = this.innerFillColor;
+						ctx.fillStyle = slice.fillColor? slice.fillColor: this.fillColor;
 
 						ctx.fill();
 						ctx.lineJoin = 'bevel';
@@ -125,45 +134,7 @@
 						if (this.showStroke){
 							ctx.stroke();
 						}
-					}
-				},
-
-				// Override to highlight correct part of segment
-				inRange : function(chartX,chartY){
-
-					var pointRelativePosition = helpers.getAngleFromPoint(this, {
-						x: chartX,
-						y: chartY
-					});
-
-					//Check if within the range of the open/close angle
-					var betweenAngles = (pointRelativePosition.angle >= this.startAngle && pointRelativePosition.angle <= this.endAngle);
-					
-					// The inner segment, if it exists:
-					var withinInnerRadius = this.innerRadius? 
-						(pointRelativePosition.distance >= this.centerRadius && pointRelativePosition.distance <= this.innerRadius): false;
-					
-					// The outer segment (first figure out the inner radius for this segment):
-					var innerRadiusForOuterSegment = this.innerRadius? this.innerRadius: this.centerRadius;
-					var withinOuterRadius = (pointRelativePosition.distance >= innerRadiusForOuterSegment && pointRelativePosition.distance <= this.outerRadius);
-
-					// Record which (if any) is highlighted:
-					this.withinInnerRadius = withinInnerRadius;
-					this.withinOuterRadius = withinOuterRadius;
-
-					return (betweenAngles && (withinInnerRadius || withinOuterRadius));
-					//Ensure within the outside of the arc centre, but inside arc outer
-				},
-				tooltipPosition : function(){
-					var innerRadiusForSegment = this.withinInnerRadius || !this.innerRadius ? this.centerRadius: this.innerRadius;
-					var outerRadiusForSegment = this.withinInnerRadius? this.innerRadius: this.outerRadius;
-
-					var centreAngle = this.startAngle + ((this.endAngle - this.startAngle) / 2),
-						rangeFromCentre = (outerRadiusForSegment - innerRadiusForSegment) / 2 + innerRadiusForSegment;
-					return {
-						x : this.x + (Math.cos(centreAngle) * rangeFromCentre),
-						y : this.y + (Math.sin(centreAngle) * rangeFromCentre)
-					};
+					}, this);
 				}
 			});
 			this.scale = new Chart.RadialScale({
@@ -200,54 +171,31 @@
 			//Set up tooltip events on the chart
 			if (this.options.showTooltips){
 				helpers.bindEvents(this, this.options.tooltipEvents, function(evt){
-					var activeSegments = (evt.type !== 'mouseout') ? this.getSegmentsAtEvent(evt) : [];
-					helpers.each(this.segments,function(segment){
-						segment.restore(["fillColor"]);
-						
-						if (segment.innerFillColor){
-							segment.restore(["innerFillColor"]);
-						}
+					var activeSlices = (evt.type !== 'mouseout') ? this.getSlicesAtEvent(evt) : [];
+					helpers.each(this.segments,function(slice){
+						slice.restore(["fillColor"]);
 					});
-					helpers.each(activeSegments,function(activeSegment){
-						// Determine whether to highlight inner or outer radius.
-						if (activeSegment.withinOuterRadius){
-							// It's in the outer part of the segment:
-							activeSegment.fillColor = activeSegment.highlightColor;
-							if (activeSegment.innerFillColor){
-								activeSegment.restore(["innerFillColor"]);
-							}
-						} else if (activeSegment.withinInnerRadius){
-							// It's in the inner part of the segment:
-							activeSegment.innerFillColor = activeSegment.highlightColor;
-							activeSegment.restore(["fillColor"]);
-
-							// Temporarily set label as inner label for showTooltip call
-							if (activeSegment.innerLabel){
-								activeSegment.label = activeSegment.innerLabel;
-							}
-						}
+					helpers.each(activeSlices,function(activeSlice){
+						activeSlice.fillColor = activeSlice.highlightColor;
 					});
-					this.showTooltip(activeSegments);
-
-					// Reset labels back to non-inner label after showTooltip call.
-					helpers.each(activeSegments,function(activeSegment){
-						if (activeSegment.innerLabel){
-							activeSegment.restore(["label"]);
-						}
-					});
+					this.showTooltip(activeSlices);
 				});
 			}
 
 
 			this.render();
 		},
-		getSegmentsAtEvent : function(e){
+		getSlicesAtEvent : function(e){
 			var segmentsArray = [];
 
 			var location = helpers.getRelativePosition(e);
 
 			helpers.each(this.segments,function(segment){
-				if (segment.inRange(location.x,location.y)) segmentsArray.push(segment);
+				helpers.each(segment.slices, function(slice){
+					slice.x = segment.x;
+					slice.y = segment.y;
+					if (slice.inRange(location.x,location.y)) segmentsArray.push(slice);
+				}, this);
 			},this);
 			return segmentsArray;
 		},
@@ -256,17 +204,26 @@
 
 			this.calculateTotalWidth(this.segments);
 
+			var slices = [];
+
+			helpers.each(segment.slices, function(slice){
+				slices.splice(0, 0, new this.SliceArc({
+					height: slice.height,
+					fillColor: slice.color,
+					highlightColor: slice.highlight,
+					label: slice.label,
+					startAngle: Math.PI * 1.5
+				}));
+			}, this);
+
 			this.segments.splice(index, 0, new this.SegmentArc({
 				fillColor: segment.color,
-				innerFillColor: segment.innerColor,
 				highlightColor: segment.highlight || segment.color,
-				label: segment.label,
-				innerLabel: segment.innerLabel,
-				height: segment.height,
+				height: this.getSegmentHeight(segment.slices),
 				innerHeight: segment.innerHeight,
 				width: segment.width,
-				outerRadius: (this.options.animateScale) ? 0 : this.scale.calculateCenterOffset(segment.height),
-				innerRadius: (this.options.animateScale) ? 0 : this.scale.calculateCenterOffset(segment.innerHeight),
+				slices: slices,
+				outerRadius: (this.options.animateScale) ? 0 : this.scale.calculateCenterOffset(this.getSegmentHeight(segment.slices)),
 				circumference: (this.options.animateRotate) ? 0 : this.calculateSegmentCircumference(segment.width),
 				startAngle: Math.PI * 1.5
 			}));
@@ -295,14 +252,23 @@
 			},this);
 			this.scale.valuesCount = this.segments.length;
 		},
+		getSegmentHeight: function(data){
+			var segmentHeight = 0;
+			
+			helpers.each(data,function(slice){
+				segmentHeight += slice.height;
+			},this);
+
+			return segmentHeight;
+		},
 		calculateSegmentCircumference : function(value){
 			return (Math.PI*2)*(Math.abs(value) / this.totalWidth);
 		},
 		updateScaleRange: function(datapoints){
 			var valuesArray = [];
 			helpers.each(datapoints,function(segment){
-				valuesArray.push(segment.height);
-			});
+				valuesArray.push(this.getSegmentHeight(segment.slices));
+			}, this);
 
 			var scaleSizes = (this.options.scaleOverride) ?
 				{
@@ -356,8 +322,7 @@
 
 			helpers.each(this.segments, function(segment){
 				segment.update({
-					outerRadius : this.scale.calculateCenterOffset(segment.height),
-					innerRadius : this.scale.calculateCenterOffset(segment.innerHeight)
+					outerRadius : this.scale.calculateCenterOffset(segment.height)
 				});
 			}, this);
 
@@ -370,13 +335,23 @@
 			this.calculateTotalWidth(this.segments);
 
 			helpers.each(this.segments,function(segment, index){
-				segment.transition({
-					circumference : this.calculateSegmentCircumference(segment.width),
-					outerRadius : this.scale.calculateCenterOffset(segment.height),
-					innerRadius : this.scale.calculateCenterOffset(segment.innerHeight)
-				},easingDecimal);
+				segment.circumference = this.calculateSegmentCircumference(segment.width);
+				segment.outerRadius = this.scale.calculateCenterOffset(segment.height);
+
+				// Add inner and outer radius + height to slices.
+				var sliceHeight = 0;
+				helpers.each(segment.slices, function(slice){
+					slice.innerRadius = this.scale.calculateCenterOffset(sliceHeight);
+					sliceHeight += slice.height;
+					slice.heightInSegment = sliceHeight;
+					slice.outerRadius = this.scale.calculateCenterOffset(slice.heightInSegment);
+				}, this);
 
 				segment.endAngle = segment.startAngle + segment.circumference;
+
+				helpers.each(segment.slices, function(slice){
+					slice.endAngle = segment.endAngle;
+				}, this);
 
 				// If we've removed the first segment we need to set the first one to
 				// start at the top.
@@ -387,6 +362,10 @@
 				//Check to see if it's the last segment, if not get the next and update the start angle
 				if (index < this.segments.length - 1){
 					this.segments[index+1].startAngle = segment.endAngle;
+
+					helpers.each(this.segments[index+1].slices, function(slice){
+						slice.startAngle = segment.endAngle;
+					}, this);
 				}
 				segment.draw();
 

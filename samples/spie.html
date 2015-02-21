@@ -16,44 +16,36 @@
 
 		var spieData = [
 				{
-					height: 300,
-					innerHeight: 200,
 					width: 30,
-					color:"#F7464A",
-					innerColor:"#F50208",
-					highlight: "#FF5A5E",
-					label: "Red",
-					innerLabel: "INNER!"
-				},
-				{
-					height: 50,
-					width: 30,
-					color: "#46BFBD",
-					highlight: "#5AD3D1",
-					label: "Green"
-				},
-				{
-					height: 100,
-					width: 30,
-					color: "#FDB45C",
-					highlight: "#FFC870",
-					label: "Yellow"
-				},
-				{
-					height: 40,
-					width: 60,
-					color: "#949FB1",
-					highlight: "#A8B3C5",
-					label: "Grey"
-				},
-				{
-					height: 120,
-					width: 100,
-					color: "#4D5360",
-					highlight: "#616774",
-					label: "Dark Grey"
-				}
 
+					slices :
+						[
+							{
+								height: 100,
+								color: "#F7464A",
+								highlight: "#FF5A5E",
+								label: "Outer"
+							}
+						]
+				},
+				{
+					width: 20,
+					slices :
+						[
+							{
+								height: 400,
+								color: "#46BFBD",
+								highlight: "#5AD3D1",
+								label: "Outer-Green"
+							},
+							{
+								height: 50,
+								color: "#39B8B6",
+								highlight: "#5AD3D1",
+								label: "Inner-Green"
+							}
+						]
+				}
 			];
 
 			window.onload = function(){
