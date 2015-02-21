@@ -49,9 +49,9 @@
 		animateScale : false,
 
 		//String - A legend template
-		legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<segments.length; i++){%><li><span style=\"background-color:<%=segments[i].fillColor%>\"></span><%if(segments[i].label){%><%=segments[i].label%><%}%></li><%}%></ul>",
+		legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<segments.length; i++){%><li><span style=\"background-color:<%=segments[i].fillColor%>\"></span><%if(segments[i].label){%><%=segments[i].label%><%}%></li><ul><% for (var j=0; j<segments[i].slices.length; j++){%><li><span style=\"background-color:<%=segments[i].slices[j].fillColor%>\"></span><%if(segments[i].slices[j].label){%><%=segments[i].slices[j].label%><%}%></li><%}%></ul><%}%></ul>",
 
-		tooltipTemplate: "<%if (label){%><%=label%><%}%>"
+		tooltipTemplate: "<%if (label){%><%=label%><%}%><%if (segmentLabel && label){%>-<%}%><%if (segmentLabel){%><%=segmentLabel%><%}%>"
 
 	};
 
@@ -84,7 +84,6 @@
 					
 					var withinSlice = (pointRelativePosition.distance >= this.innerRadius && pointRelativePosition.distance <= this.outerRadius);
 
-					console.log("within " + this.label + "?: " + betweenAngles + ", " + withinSlice);
 					return (betweenAngles && withinSlice);
 					//Ensure within the outside of the arc centre, but inside arc outer
 				},
@@ -214,8 +213,8 @@
 					height: slice.height,
 					fillColor: slice.color,
 					highlightColor: slice.highlight,
-					label: (segment.label? segment.label: "") + 
-						(slice.label? slice.label: ""),
+					label: segment.label,
+					segmentLabel: slice.label,
 					startAngle: Math.PI * 1.5
 				}));
 			}, this);
