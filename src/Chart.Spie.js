@@ -335,16 +335,23 @@
 			this.calculateTotalWidth(this.segments);
 
 			helpers.each(this.segments,function(segment, index){
-				segment.circumference = this.calculateSegmentCircumference(segment.width);
-				segment.outerRadius = this.scale.calculateCenterOffset(segment.height);
+				
+				segment.transition({
+					circumference : this.calculateSegmentCircumference(segment.width),
+					outerRadius : this.scale.calculateCenterOffset(segment.height)
+				},easingDecimal);
 
 				// Add inner and outer radius + height to slices.
 				var sliceHeight = 0;
 				helpers.each(segment.slices, function(slice){
+					
 					slice.innerRadius = this.scale.calculateCenterOffset(sliceHeight);
+					
 					sliceHeight += slice.height;
 					slice.heightInSegment = sliceHeight;
+					
 					slice.outerRadius = this.scale.calculateCenterOffset(slice.heightInSegment);
+					
 				}, this);
 
 				segment.endAngle = segment.startAngle + segment.circumference;
