@@ -126,6 +126,44 @@
 							ctx.stroke();
 						}
 					}
+				},
+
+				// Override to highlight correct part of segment
+				inRange : function(chartX,chartY){
+
+					var pointRelativePosition = helpers.getAngleFromPoint(this, {
+						x: chartX,
+						y: chartY
+					});
+
+					//Check if within the range of the open/close angle
+					var betweenAngles = (pointRelativePosition.angle >= this.startAngle && pointRelativePosition.angle <= this.endAngle);
+					
+					// The inner segment, if it exists:
+					var withinInnerRadius = this.innerRadius? 
+						(pointRelativePosition.distance >= this.centerRadius && pointRelativePosition.distance <= this.innerRadius): false;
+					
+					// The outer segment (first figure out the inner radius for this segment):
+					var innerRadiusForOuterSegment = this.innerRadius? this.innerRadius: this.centerRadius;
+					var withinOuterRadius = (pointRelativePosition.distance >= innerRadiusForOuterSegment && pointRelativePosition.distance <= this.outerRadius);
+
+					// Record which (if any) is highlighted:
+					this.withinInnerRadius = withinInnerRadius;
+					this.withinOuterRadius = withinOuterRadius;
+
+					return (betweenAngles && (withinInnerRadius || withinOuterRadius));
+					//Ensure within the outside of the arc centre, but inside arc outer
+				},
+				tooltipPosition : function(){
+					var innerRadiusForSegment = this.withinInnerRadius || !this.innerRadius ? this.centerRadius: this.innerRadius;
+					var outerRadiusForSegment = this.withinInnerRadius? this.innerRadius: this.outerRadius;
+
+					var centreAngle = this.startAngle + ((this.endAngle - this.startAngle) / 2),
+						rangeFromCentre = (outerRadiusForSegment - innerRadiusForSegment) / 2 + innerRadiusForSegment;
+					return {
+						x : this.x + (Math.cos(centreAngle) * rangeFromCentre),
+						y : this.y + (Math.sin(centreAngle) * rangeFromCentre)
+					};
 				}
 			});
 			this.scale = new Chart.RadialScale({
@@ -165,13 +203,26 @@
 					var activeSegments = (evt.type !== 'mouseout') ? this.getSegmentsAtEvent(evt) : [];
 					helpers.each(this.segments,function(segment){
 						segment.restore(["fillColor"]);
+						
+						if (segment.innerFillColor){
+							segment.restore(["innerFillColor"]);
+						}
 					});
 					helpers.each(activeSegments,function(activeSegment){
-						activeSegment.fillColor = activeSegment.highlightColor;
+						if (activeSegment.withinOuterRadius){
+							activeSegment.fillColor = activeSegment.highlightColor;
+							if (activeSegment.innerFillColor){
+								activeSegment.restore(["innerFillColor"]);
+							}
+						} else if (activeSegment.withinInnerRadius){
+							activeSegment.innerFillColor = activeSegment.highlightColor;
+							activeSegment.restore(["fillColor"]);
+						}
 					});
 					this.showTooltip(activeSegments);
 				});
 			}
+
 
 			this.render();
 		},
