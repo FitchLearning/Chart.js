@@ -1767,6 +1767,7 @@
                 progressNodeTemplate.removeClass('hide');
                 progressNodeTemplate.removeAttr('id');
 
+                var progressContainer = $('.progress-container', progressNodeTemplate);
                 var progressBar = $('.progress-bar', progressNodeTemplate);
                 var progressScore = $('.progress-score', progressNodeTemplate);
                 var progressText = $('.progress-text', progressNodeTemplate);
@@ -1775,6 +1776,7 @@
                 progressNodeTemplate.attr('title', 'Completed ' + node.completion + '%, Score ' + node.score + '%');
 
                 this.removeListOfClasses(4, progressBar, 'progress-colour-');
+
                 progressBar.addClass('progress-colour-' + node.nodeStatus);
                 progressBar.css({width: node.completion + '%'});
 
@@ -1791,6 +1793,7 @@
                     }.bind(this));
                 } else {
                     progressNodeTemplate.attr('title', 'In-active');
+                    progressContainer.addClass('progress-action-off');
                 }
 
                 // Use prepend because the template has markup at the end of it
@@ -1826,9 +1829,12 @@
                 var replaceMap = {"%menuId%": nodeStatsData.parentMenuId, "%nodeId%": nodeStatsData.parentId};
 
                 if (nodeStatsData.parentMenuId !== 0) {
+                    element.removeClass('grad-title-action-off');
                     element.click(function() {
                         window.location = this.replaceAll(this.nodeStats.contentNodeUrl, replaceMap);
                     }.bind(this));
+                } else {
+                    element.addClass('grad-title-action-off');
                 }
             }.bind(this);
 
