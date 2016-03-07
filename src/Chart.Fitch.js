@@ -1792,7 +1792,7 @@
 
                     }.bind(this));
                 } else {
-                    progressNodeTemplate.attr('title', 'In-active');
+                    progressNodeTemplate.attr('title', 'Inactive');
                     progressContainer.addClass('progress-action-off');
                 }
 
